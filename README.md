@@ -8,9 +8,11 @@
 
 # shini
 
-![shini](https://github.com/pforret/splashmark/raw/master/examples/size_github.jpg)
+![shini](assets/unsplash.ini.jpg)
 
-Bash .ini parser
+![Under Development](https://img.shields.io/badge/under-development-orange)
+
+Bash .ini config file parser
 
 ## 🔥 Usage
 

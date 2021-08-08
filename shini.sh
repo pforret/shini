@@ -42,8 +42,11 @@ flag|v|verbose|output more
 flag|f|force|do not ask for confirmation (always yes)
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
-param|1|action|action to perform: action1/action2
-param|?|input|input file/text
+option|d|default|name of chapter with default values|_default
+param|1|action|action to perform: chapters/setall/listall/get
+param|?|input|input file
+param|?|chapter|chapter name
+param|?|key|key name
 " | grep -v '^#' | grep -v '^\s*$'
 }
 
@@ -56,19 +59,35 @@ main() {
 
   action=$(lower_case "$action")
   case $action in
-  action1)
-    #TIP: use «$script_prefix action1» to ...
-    #TIP:> $script_prefix action1 input.txt
+  chapters)
+    #TIP: use «$script_prefix chapters» to list all chapters of a .ini file, e.g. to use in a loop
+    #TIP:> $script_prefix chapters production.ini
     # shellcheck disable=SC2154
-    do_action1 "$input"
+    do_chapters "$input"
     ;;
 
-  action2)
-    #TIP: use «$script_prefix action2» to ...
-    #TIP:> $script_prefix action2 input.txt output.pdf
+  setall|set-all|set)
+    #TIP: use «$script_prefix setall» to set all values of a chapter
+    #TIP:> $script_prefix setall production.ini frontend # and now all the variables in .ini have been set
 
     # shellcheck disable=SC2154
-    do_action2 "$input" "$output"
+    do_setall "$input" "$chapter"
+    ;;
+
+  listall|list-all|list)
+    #TIP: use «$script_prefix setall» to list all values of a chapter
+    #TIP:> $script_prefix listall production.ini frontend
+
+    # shellcheck disable=SC2154
+    do_listall "$input" "$chapter"
+    ;;
+
+  get)
+    #TIP: use «$script_prefix get» to get the value of 1 key for a certain chapter
+    #TIP:> $script_prefix get production.ini frontend http_port
+
+    # shellcheck disable=SC2154
+    do_get "$input" "$chapter" "$key"
     ;;
 
   check|env)
@@ -100,16 +119,32 @@ main() {
 ## Put your helper scripts here
 #####################################################################
 
-do_action1() {
-  log_to_file "action1 [$input]"
+do_chapters() {
+  log_to_file "chapters [$input]"
   # Examples of required binaries/scripts and how to install them
-  # require_binary "convert" "imagemagick"
-  # require_binary "progressbar" "basher install pforret/progressbar"
+  require_binary "awk"
+  < "$1" awk -v default="$default" '
+  /^\[[^\]]*\]/ {
+  chapter_name=match(
+    }'
+
   # (code)
 }
 
-do_action2() {
-  log_to_file "action2 [$input]"
+do_setall() {
+  log_to_file "setall [$input] [$chapter]"
+  # (code)
+
+}
+
+do_listall() {
+  log_to_file "listall [$input] [$chapter]"
+  # (code)
+
+}
+
+do_get() {
+  log_to_file "get [$input] [$chapter] [$key]"
   # (code)
 
 }
