@@ -57,37 +57,43 @@ param|?|key|key name
 main() {
   log_to_file "[$script_basename] $script_version started"
 
+  require_binary "awk"
   action=$(lower_case "$action")
   case $action in
   chapters)
     #TIP: use «$script_prefix chapters» to list all chapters of a .ini file, e.g. to use in a loop
     #TIP:> $script_prefix chapters production.ini
+
+    [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
     # shellcheck disable=SC2154
-    do_chapters "$input"
+    do_chapters
     ;;
 
-  setall|set-all|set)
+  setall|set-all|set|prepare)
     #TIP: use «$script_prefix setall» to set all values of a chapter
     #TIP:> $script_prefix setall production.ini frontend # and now all the variables in .ini have been set
 
+    [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
     # shellcheck disable=SC2154
-    do_setall "$input" "$chapter"
+    do_setall
     ;;
 
   listall|list-all|list)
     #TIP: use «$script_prefix setall» to list all values of a chapter
     #TIP:> $script_prefix listall production.ini frontend
 
+    [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
     # shellcheck disable=SC2154
-    do_listall "$input" "$chapter"
+    do_listall
     ;;
 
   get)
     #TIP: use «$script_prefix get» to get the value of 1 key for a certain chapter
     #TIP:> $script_prefix get production.ini frontend http_port
 
+    [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
     # shellcheck disable=SC2154
-    do_get "$input" "$chapter" "$key"
+    do_get
     ;;
 
   check|env)
@@ -120,27 +126,52 @@ main() {
 #####################################################################
 
 do_chapters() {
-  log_to_file "chapters [$input]"
-  # Examples of required binaries/scripts and how to install them
-  require_binary "awk"
-  < "$1" awk -v default="$default" '
+  # shellcheck disable=SC2154
+  < "$input" awk -v default="$default" '
   /^\[[^\]]*\]/ {
-  chapter_name=match(
+    gsub(/[\[\]]/,"",$1);
+    if($1 != default) { print $1 }
     }'
-
-  # (code)
 }
 
 do_setall() {
-  log_to_file "setall [$input] [$chapter]"
-  # (code)
-
+  do_list \
+  | while read -r line ; do
+    var="$(echo "$line" | cut -d'=' -f1)"
+    debug "Set [$line] and export [$var]"
+    eval "$line"
+    export var
+    eval "echo $\"$var\""
+    done
 }
 
-do_listall() {
-  log_to_file "listall [$input] [$chapter]"
-  # (code)
+do_list() {
+  # shellcheck disable=SC2154
+  < "$input" awk -F '=' -v chapter="$chapter" -v default="$default" \
+    '
+    BEGIN {current=""; OFS=""}
 
+    /^\[.+\]/  {
+      gsub(/[\[\]]/,"",$1)
+      current=$1
+      }
+
+    /.+=.+/ {
+      key=$1 ; $1=""
+      if(current == default && !values[key]) {values[key]=$0}
+      if(current == chapter) {values[key]=$0}
+    }
+
+    END{
+      for(key in values){
+        if(match(values[key],/[0-9]+/)){
+          print key,"=",values[key]
+        } else {
+          print key,"=\"",values[key],"\""
+        }
+      }
+    }
+    '
 }
 
 do_get() {

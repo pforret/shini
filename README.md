@@ -16,9 +16,9 @@ Bash .ini config file parser
 
 ## 🔥 Usage
 
-```
-Program: shini 0.0.2 by peter@forret.com
-Updated: Aug  8 20:13:24 2021
+```bash
+Program: shini 0.0.4 by peter@forret.com
+Updated: Aug  8 20:18:27 2021
 Description: Bash .ini parser
 Usage: shini [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] [-d <default>] <action> <input?> <chapter?> <key?>
 Flags, options and parameters:
@@ -33,6 +33,34 @@ Flags, options and parameters:
     <input>          : [parameter] input file (optional)
     <chapter>        : [parameter] chapter name (optional)
     <key>            : [parameter] key name (optional)
+                                  @github.com:pforret/shini.git                                             
+### TIPS & EXAMPLES
+# use `shini chapters` to list all chapters of a .ini file, e.g. to use in a loop
+shini chapters production.ini | while read -r chapter ; do (...) done
+
+# use shini setall to set all values of a chapter
+shini setall production.ini frontend # and now all the variables in .ini have been set
+
+# use shini listall to list all values of a chapter
+shini listall production.ini frontend
+# key1=value1
+# key2=value2
+
+# use shini get to get the value of 1 key for a certain chapter
+port=$(shini get production.ini frontend http_port)
+
+# you can add a chapter with default values
+[_default]
+http_port=80
+
+# use shini check to check if this script is ready to execute and what values the options/flags are
+shini check
+
+# use shini env to generate an example .env file
+shini env > .env
+
+# use shini update to update to the latest version
+shini check
 ```
 
 ## ⚡️ Examples
