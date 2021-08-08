@@ -17,19 +17,22 @@ Bash .ini config file parser
 ## 🔥 Usage
 
 ```
-Program: shini 0.0.1 by peter@forret.com
-Updated: 2021-08-08
+Program: shini 0.0.2 by peter@forret.com
+Updated: Aug  8 20:13:24 2021
 Description: Bash .ini parser
-Usage: normal.sh [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] <action> <input?>
+Usage: shini [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] [-d <default>] <action> <input?> <chapter?> <key?>
 Flags, options and parameters:
     -h|--help        : [flag] show usage [default: off]
     -q|--quiet       : [flag] no output [default: off]
     -v|--verbose     : [flag] output more [default: off]
     -f|--force       : [flag] do not ask for confirmation (always yes) [default: off]
-    -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/normal]
-    -t|--tmp_dir <?> : [option] folder for temp files  [default: .tmp]
-    <action>         : [parameter] action to perform: analyze/convert
-    <input>          : [parameter] input file/text (optional)
+    -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/shini]
+    -t|--tmp_dir <?> : [option] folder for temp files  [default: /tmp/shini]
+    -d|--default <?> : [option] name of chapter with default values  [default: _default]
+    <action>         : [parameter] action to perform: chapters/setall/listall/get
+    <input>          : [parameter] input file (optional)
+    <chapter>        : [parameter] chapter name (optional)
+    <key>            : [parameter] key name (optional)
 ```
 
 ## ⚡️ Examples
