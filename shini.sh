@@ -145,7 +145,7 @@ do_setall() {
     done
 }
 
-do_list() {
+do_listall() {
   # shellcheck disable=SC2154
   < "$input" awk -F '=' -v chapter="$chapter" -v default="$default" \
     '
@@ -175,8 +175,27 @@ do_list() {
 }
 
 do_get() {
+  # shellcheck disable=SC2154
   log_to_file "get [$input] [$chapter] [$key]"
-  # (code)
+  < "$input" awk -F '=' -v chapter="$chapter" -v key="$key" -v default="$default" \
+    '
+    BEGIN { current=""; OFS=""; result="" }
+
+    /^\[.+\]/  {
+      gsub(/[\[\]]/,"",$1)
+      current=$1
+      }
+
+    /.+=.+/ {
+    if($1 == key){
+      $1=""
+      if(current == default && !result) {result=$0}
+      if(current == chapter) {result=$0}
+      }
+    }
+
+    END{ print result }
+    '
 
 }
 
