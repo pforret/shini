@@ -79,7 +79,7 @@ main() {
     ;;
 
   listall|list-all|list)
-    #TIP: use «$script_prefix setall» to list all values of a chapter
+    #TIP: use «$script_prefix listall» to list all values of a chapter
     #TIP:> $script_prefix listall production.ini frontend
 
     [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
