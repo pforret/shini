@@ -130,19 +130,21 @@ main() {
 
 do_chapters() {
   # shellcheck disable=SC2154
-  < "$input" awk -v defchapter="$default" '
-    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
-    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
-    function trim(s) { return rtrim(ltrim(s)); }
+  < "$input" sed -n 's/^[ \t]*\[\(.*\)\].*/\1/p'
 
-    /^\[[^\]]*\]/ {
-      gsub(/[\[\]]/,"",$1);
-      if($1 != defchapter) { print trim($1) }
-      }'
+#  awk -v defchapter="$default" '
+#    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+#    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+#    function trim(s) { return rtrim(ltrim(s)); }
+#
+#    /^\[[^\]]*\]/ {
+#      gsub(/[\[\]]/,"",$1);
+#      if($1 != defchapter) { print trim($1) }
+#      }'
 }
 
 do_setall() {
-  do_list \
+  do_listall \
   | while read -r line ; do
     var="$(echo "$line" | cut -d'=' -f1)"
     debug "Set [$line] and export [$var]"
@@ -155,7 +157,7 @@ do_setall() {
 do_listall() {
   # shellcheck disable=SC2154
   debug "list-all for chapter [$chapter]"
-  < "$input" awk -F '=' -v chapter="$chapter" -v defchapter="$default" \
+  < "$input" awk -v chapter="$chapter" -v defchapter="$default" \
     '
     function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
     function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
@@ -168,21 +170,10 @@ do_listall() {
       current=trim($1)
       }
 
-    $2 != "" {
-      key=$1 ; $1=""
-      if(current == chapter || (current == defchapter && !values[key]) ) {
-        values[key] = trim($0);
+     /.+=.+/ {
+      if(current == chapter || current == defchapter) {
+        print $0
         }
-    }
-
-    END{
-      for(key in values){
-        if(match(values[key],/[0-9]+/)){
-          print key,"=",values[key]
-        } else {
-          print key,"=\"",values[key],"\""
-        }
-      }
     }
     '
 }
@@ -190,30 +181,23 @@ do_listall() {
 do_get() {
   # shellcheck disable=SC2154
   log_to_file "get [$input] [$chapter] [$key]"
-  < "$input" awk -F '=' -v chapter="$chapter" -v key="$key" -v defchapter="$default" \
-    '
-    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
-    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
-    function trim(s) { return rtrim(ltrim(s)); }
+  do_listall \
+  | grep "$key=" \
+  | awk -v key="$key" '
+  {
+  gsub(key "=","");
+  gsub(/^"/,"");
+  gsub(/^''/,"");
+  gsub(/"$/,"");
+  gsub(/''$/,"");
+  print
+  }'
 
-    BEGIN { current=""; OFS=""; result="" }
-
-    /^\[.+\]/  {
-      gsub(/[\[\]]/,"",$1)
-      current=trim($1)
-      }
-
-    /.+=.+/ {
-    if($1 == key){
-      $1=""
-      if(current == defchapter && !result) {result=trim($0)}
-      if(current == chapter) {result=trim($0)}
-      }
-    }
-
-    END{ print result }
-    '
-
+#  do_listall \
+#  | grep -E "$key=" \
+#  | sed "s|$key=||" \
+#  | sed 's/^["]//' \
+#  | sed 's/["]$//'
 }
 
 
