@@ -74,7 +74,6 @@ main() {
     #TIP:> $script_prefix setall production.ini frontend # and now all the variables in .ini have been set
 
     [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
-    # shellcheck disable=SC2154
     do_setall
     ;;
 
@@ -83,7 +82,6 @@ main() {
     #TIP:> $script_prefix listall production.ini frontend
 
     [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
-    # shellcheck disable=SC2154
     do_listall
     ;;
 
@@ -92,8 +90,13 @@ main() {
     #TIP:> $script_prefix get production.ini frontend http_port
 
     [[ ! -f "$input" ]] && die "ini file [$input] does not exist"
-    # shellcheck disable=SC2154
-    do_get
+    if [[ -z "$chapter"  ]] ; then
+      do_chapters
+    elif [[ -z "$key" ]] ; then
+      do_listall
+    else
+      do_get
+    fi
     ;;
 
   check|env)
@@ -127,11 +130,15 @@ main() {
 
 do_chapters() {
   # shellcheck disable=SC2154
-  < "$input" awk -v default="$default" '
-  /^\[[^\]]*\]/ {
-    gsub(/[\[\]]/,"",$1);
-    if($1 != default) { print $1 }
-    }'
+  < "$input" awk -v defchapter="$default" '
+    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+    function trim(s) { return rtrim(ltrim(s)); }
+
+    /^\[[^\]]*\]/ {
+      gsub(/[\[\]]/,"",$1);
+      if($1 != defchapter) { print trim($1) }
+      }'
 }
 
 do_setall() {
@@ -147,19 +154,25 @@ do_setall() {
 
 do_listall() {
   # shellcheck disable=SC2154
-  < "$input" awk -F '=' -v chapter="$chapter" -v default="$default" \
+  debug "list-all for chapter [$chapter]"
+  < "$input" awk -F '=' -v chapter="$chapter" -v defchapter="$default" \
     '
+    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+    function trim(s) { return rtrim(ltrim(s)); }
+
     BEGIN {current=""; OFS=""}
 
     /^\[.+\]/  {
       gsub(/[\[\]]/,"",$1)
-      current=$1
+      current=trim($1)
       }
 
-    /.+=.+/ {
+    $2 != "" {
       key=$1 ; $1=""
-      if(current == default && !values[key]) {values[key]=$0}
-      if(current == chapter) {values[key]=$0}
+      if(current == chapter || (current == defchapter && !values[key]) ) {
+        values[key] = trim($0);
+        }
     }
 
     END{
@@ -177,20 +190,24 @@ do_listall() {
 do_get() {
   # shellcheck disable=SC2154
   log_to_file "get [$input] [$chapter] [$key]"
-  < "$input" awk -F '=' -v chapter="$chapter" -v key="$key" -v default="$default" \
+  < "$input" awk -F '=' -v chapter="$chapter" -v key="$key" -v defchapter="$default" \
     '
+    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+    function trim(s) { return rtrim(ltrim(s)); }
+
     BEGIN { current=""; OFS=""; result="" }
 
     /^\[.+\]/  {
       gsub(/[\[\]]/,"",$1)
-      current=$1
+      current=trim($1)
       }
 
     /.+=.+/ {
     if($1 == key){
       $1=""
-      if(current == default && !result) {result=$0}
-      if(current == chapter) {result=$0}
+      if(current == defchapter && !result) {result=trim($0)}
+      if(current == chapter) {result=trim($0)}
       }
     }
 
