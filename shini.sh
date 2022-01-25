@@ -184,13 +184,17 @@ do_get() {
   do_listall \
   | grep "$key=" \
   | awk -v key="$key" '
+    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+    function trim(s) { return rtrim(ltrim(s)); }
   {
   gsub(key "=","");
+  $0=trim($0);
   gsub(/^"/,"");
   gsub(/^''/,"");
   gsub(/"$/,"");
   gsub(/''$/,"");
-  print
+  print trim($0)
   }'
 
 #  do_listall \
